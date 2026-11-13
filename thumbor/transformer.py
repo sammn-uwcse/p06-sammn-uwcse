@@ -298,6 +298,10 @@ class Transformer:
             )
             crop_height = source_height
 
+        # never crop to an empty image: a crop must keep at least one pixel
+        crop_width = max(1, crop_width)
+        crop_height = max(1, crop_height)
+
         crop_left = int(
             round(
                 min(
@@ -386,20 +390,28 @@ class Transformer:
         ):
             return
 
+        # a zero target side would divide by zero: use at least one pixel
+        target_width = max(1, self.target_width)
+        target_height = max(1, self.target_height)
+
         # add 1e-5 to get .5 rounding up in Python3 as it was in Python2
         if (
-            source_width / self.target_width * sign
-            >= source_height / self.target_height * sign
+            source_width / target_width * sign
+            >= source_height / target_height * sign
         ):
             resize_height = round(
-                source_height * self.target_width / source_width + 1e-5
+                source_height * target_width / source_width + 1e-5
             )
-            resize_width = self.target_width
+            resize_width = target_width
         else:
-            resize_height = self.target_height
+            resize_height = target_height
             resize_width = round(
-                source_width * self.target_height / source_height + 1e-5
+                source_width * target_height / source_height + 1e-5
             )
+
+        # a resize must keep at least one pixel on each side
+        resize_height = max(1, resize_height)
+        resize_width = max(1, resize_width)
 
         # ensure that filter should work on the real image size
         # and not on the request size which might be smaller than the
